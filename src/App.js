@@ -8,9 +8,11 @@ import tokenlist from './tokenlist.json';
 
 function App() {
 
+
   const [nft, setnft] = useState({});
   const [address, setaddress] = useState('');
-  const [successlist, setsuccesslist] = useState([]);
+  const [burnsuccesslist, setburnsuccesslist] = useState([]);
+  const [mintsuccesslist, setmintsuccesslist] = useState([]);
 
   useEffect(() => {
     loadWeb3();
@@ -58,39 +60,76 @@ function App() {
     }
   }
 
-  const burnmint = async () => {
+  const burnnft = async () => {
     try {
       let successtx = []
-      for (let i = 0; i < tokenlist.length; i++) {
+      let i = 0;
+      while (i < tokenlist.length) {
         let tok = tokenlist[i];
-        nft.methods.safeBurn(tok.tokenID).send({ from: address }).on('transactionHash', (hash) => {
+        await nft.methods.safeBurn(tok.tokenID).send({ from: address }).on('transactionHash', (hash) => {
           //success burn
-          nft.methods.safeMint(tok.seller, tok.tokenId).send({ from: address }).on('transactionHash', (hash) => {
-            //success mint
-            console.log(`${tok.tokenId} is burned and minted`);
-            successtx.push(tok.tokenId);
-          })
+          console.log(`${tok.tokenId} is burned`);
+          successtx.push(tok.tokenId);
         })
+        i++;
       }
-      setsuccesslist(successtx);
+      setburnsuccesslist(successtx);
     }
     catch (err) {
       console.log(err);
     }
   }
 
+  const mintnft = async () => {
+    try {
+      let successtx = []
+      let i = 0;
+      while (i < tokenlist.length) {
+        let tok = tokenlist[i];
+        await nft.methods.safeMint(tok.seller, tok.tokenId).send({ from: address }).on('transactionHash', (hash) => {
+          //success mint
+          console.log(`${tok.tokenId} is minted`);
+          successtx.push(tok.tokenId);
+        })
+        i++;
+      }
+      setmintsuccesslist(successtx);
+    }
+    catch (err) {
+      console.log(err);
+    }
+  }
+
+  
+
   return (
     <div className="App">
-      <button onClick={() => { burnmint() }} style={{ marginLeft: "10px" }}>
-        burnandmint
+    <div>
+    <button onClick={() => { burnnft() }} style={{ marginLeft: "10px" }}>
+        burn
       </button>
       <hr/>
-      Tokens burned and minted:
+      Tokens burned:
       {
-        successlist.map((item, index) => {
+        burnsuccesslist.map((item, index) => {
           return <div key={index}>{item}</div>
         })
       }
+    </div>
+    <br/>
+    <div>
+    <button onClick={() => { mintnft() }} style={{ marginLeft: "10px" }}>
+        mint
+      </button>
+      <hr/>
+      Tokens minted:
+      {
+        mintsuccesslist.map((item, index) => {
+          return <div key={index}>{item}</div>
+        })
+      }
+    </div>
+      
     </div>
   );
 }
